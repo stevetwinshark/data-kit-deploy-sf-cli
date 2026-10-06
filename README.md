@@ -3,9 +3,11 @@
 Move a **Data 360 Data Kit** from one Salesforce org to another using only the `sf` CLI and a few shell/Python
 scripts — give it a kit name and two org aliases.
 
-> **Experimental.** This relies on Connect API behavior that is undocumented or differs from the published spec
-> (see [Known quirks](#known-quirks)), and the deploy payloads are reverse-engineered. It has been exercised on
-> API v67.0 and v68.0 against sandboxes only. Expect it to break between releases.
+> **Experimental.** Every endpoint used here is part of the documented Data 360 Connect API (see
+> [Salesforce documentation](#salesforce-documentation)). What makes it fragile is that the documentation is thin or
+> inconsistent in places (see [Where the docs and behavior diverge](#where-the-docs-and-behavior-diverge)), and that
+> the deploy request bodies are *derived* from kit contents because no endpoint returns a ready-made one. Exercised on
+> API v67.0 and v68.0 against sandboxes only; expect to adjust between releases.
 
 | Step | Script | What |
 |---|---|---|
@@ -47,18 +49,29 @@ Retrieved metadata lands in `force-app/` and run artifacts in `out/<kit>/` (both
 | componentType | Deploy body | Status |
 |---|---|---|
 | `DataLakeObject` | `{dataSourceObjectDevName, apiName, label, dataSpaceName}` | **Run end to end** (new DLO, kit absent in target → component ACTIVE). The `__dll` name is inferred by matching the kit's DLO shell by label; `DATA_SPACE` env overrides `default`. |
-| `DataStreamBundle` | `{bundleName, connectorType, bundleConfig:{connectorName}}` | Payload derived and validated against real kits; body shape seen working in manual testing for `INGESTAPI`. `connectorName == bundleName` is an **assumption**; other connector types untested. |
+| `DataStreamBundle` | `{bundleName, connectorType, bundleConfig:{connectorName}}` | Payload derived and validated against real kits; body shape seen working in earlier manual testing for `INGESTAPI`. `connectorName == bundleName` is an **assumption**; other connector types untested. |
 | `DataActionTarget` | `{apiName, label}` | Shape seen working in manual testing; not exercised by this tool. |
 | `DataModelObject` | omitted | Goes live with the metadata deploy; not accepted by the kit deploy endpoint. |
 | `DataTransform`, others | **not derived** (reported as skipped) | Transform deploys were unreliable in testing; handle separately. |
 
-## Known quirks
-- Manifest path is singular, `/ssot/datakit/{name}/manifest`; `/ssot/data-kits/{name}/manifest` returns 404.
-- `asyncMode=true` is required on deploy; omitting it returns a misleading "Sync mode unsupported" error.
-- Deploy is async — allow tens of seconds.
-- `deployment-status/{componentName}` is keyed by the kit component's `developerName` (e.g. `Test1`), not the deploy-body `apiName` (`Test1__dll`); the wrong one returns an empty `componentDetails` with no error.
-- `GET /ssot/data-kits` (list) with no `namespace` returned a 500 in testing; list kits via a Tooling query on `DataPackageKitDefinition` instead.
-- DMO→DLO field mappings are not carried by kits; repair them in the target.
+## Where the docs and behavior diverge
+The operations are all documented in the Connect API reference; these are the rough edges found while using them
+(each reproduced on v67.0 and v68.0):
+
+- **Inconsistent manifest path (spec quirk).** The reference documents it as singular, `/ssot/datakit/{dataKitDevName}/manifest`,
+  while every sibling operation is under `/ssot/data-kits/…`. The "obvious" `/ssot/data-kits/{name}/manifest` returns 404.
+- **`asyncMode=true` is required on deploy (documented), but the error is misleading.** Omitting it returns
+  `INVALID_INPUT: Sync mode unsupported at this time`, which reads like a feature flag rather than a missing parameter.
+- **`componentName` is under-specified for `deployment-status`.** The reference says only "Name of the component". In practice it
+  must be the kit component's `developerName` (e.g. `Test1`), not the deploy-body `apiName` (`Test1__dll`); the wrong one returns
+  an empty `componentDetails` with no error.
+- **Get data kits (list) returned a 500** when called without the `namespace` parameter (documented as optional; it filters by
+  *package* namespace). List kits with a Tooling query on `DataPackageKitDefinition` instead.
+- **No per-kit deploy body.** The reference documents the request schema per component type, but nothing returns the right body
+  for an existing kit, so this tool derives it (hence "experimental").
+- **Not carried by kits:** DMO→DLO field mappings. Repair them in the target.
+- **Documented but unused here:** the deploy operation accepts a `dataspace` query parameter (defaults to `default` per the reference);
+  this tool instead sets `dataSpaceName` in each DLO's deploy config.
 
 See `findings.md` for observed behavior. Contributions and corrections welcome.
 

@@ -2,7 +2,7 @@
 """Derive the Connect deploy body (components[]) from the kit name alone.
 
 Source of truth: GET /ssot/data-kits/{kit} on the SOURCE org (lists components with componentType,
-connectorType, developerName, label). Rules (reverse-engineered; see README for verification status):
+connectorType, developerName, label). Rules (derived from the documented request schemas and observed behavior; see README for verification status):
   DataStreamBundle -> {bundleName, connectorType, bundleConfig:{connectorName}}
   DataLakeObject   -> {dataSourceObjectDevName, apiName, label, dataSpaceName}
   DataActionTarget -> {apiName, label}
