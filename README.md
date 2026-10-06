@@ -25,23 +25,54 @@ It is **not a replacement for your release pipeline**: anything deployed this wa
 - **Run `--dry-run` first.** The real run asks you to type the target alias to confirm (`--yes` skips this).
 - No credentials are read or stored; REST calls go through `sf api request rest` using the CLI's own auth.
 
-## Requirements
-`sf` CLI (authenticated to both orgs), `bash`, `jq`, `python3` (stdlib only). macOS/Linux; on Windows use WSL.
-
 ## API version
 By default the tools use the **highest API version both orgs support** (read from `GET /services/data` on each org; the
 lower of the two wins). Override with `API_VERSION=68.0`. The `package.xml` `<version>` and every Connect call use it.
 `sourceApiVersion` in `sfdx-project.json` is static (68.0) — update it when you move to a newer release.
 
-## Usage
+## Getting started
+
+### 1. Install the tools
+- [Salesforce CLI (`sf`)](https://developer.salesforce.com/tools/salesforcecli) — tested with 2.150.6; needs a version that includes `sf api request rest`
+- `jq` (`brew install jq` / `apt install jq`) and `python3` (3.8+, standard library only)
+- Both orgs need Data 360 (Data Cloud) enabled, and your user must be able to retrieve/deploy metadata and manage Data Kits
+  (a System Administrator works; the minimum permission set has not been determined).
+
+### 2. Connect to the source and target orgs
+The tool never handles credentials — it uses whatever the `sf` CLI is already logged into, by **alias**. Log in once per org:
 ```bash
-sf org login web --alias source-sandbox      # once per org
-sf org login web --alias target-sandbox
-./deploy-kit.sh MyKit --from source-sandbox --to target-sandbox --dry-run   # a–d validate; e derives payload, no POST
-./deploy-kit.sh MyKit --from source-sandbox --to target-sandbox             # full run
+# Sandbox (login.salesforce.com is the default; sandboxes use test.salesforce.com)
+sf org login web --alias source-sandbox --instance-url https://test.salesforce.com
+sf org login web --alias target-sandbox --instance-url https://test.salesforce.com
+# My Domain / custom login URL: --instance-url https://yourdomain.my.salesforce.com
+sf org list        # both aliases should appear and show "Connected"
 ```
-Individual steps: `scripts/01…05` with `KIT`, `SOURCE_ORG`, `TARGET_ORG` set (see `config.sh.example`).
-Retrieved metadata lands in `force-app/` and run artifacts in `out/<kit>/` (both gitignored — they contain your org's metadata).
+For headless/CI auth see [`sf org login jwt`](https://developer.salesforce.com/docs/atlas.en-us.sfdx_cli_reference.meta/sfdx_cli_reference/cli_reference_org_commands_unified.htm).
+The **source** is where the kit was built (it is only read); the **target** is where it will be created/updated.
+
+### 3. Find the Data Kit name
+You need the kit's **developer name** (API name), not its label. Either open **Setup → Data Kits** in the source org, or list them:
+```bash
+sf data query --use-tooling-api --target-org source-sandbox \
+  --query "SELECT DeveloperName, MasterLabel FROM DataPackageKitDefinition"
+```
+(The Get Data Kits REST list endpoint is unreliable — see the divergences below — so this query is the dependable way.)
+
+### 4. Run it
+```bash
+# Always validate first: runs a–d as validate-only and builds (but does not send) the step-e payload
+./deploy-kit.sh MyKitDeveloperName --from source-sandbox --to target-sandbox --dry-run
+
+# Real run: asks you to type the target alias to confirm (add --yes to skip the prompt)
+./deploy-kit.sh MyKitDeveloperName --from source-sandbox --to target-sandbox
+```
+That's all the input needed: the kit name and the two aliases. Everything else (manifest, `package.xml`, API version, deploy
+payload) is derived. Results land in `out/<kit>/`; retrieved metadata in `force-app/` (both gitignored).
+
+### Optional: `config.sh` for running individual steps
+To run `scripts/01…05` one at a time, `cp config.sh.example config.sh`, set `KIT`, `SOURCE_ORG`, `TARGET_ORG`, then e.g.
+`scripts/01-get-manifest.sh`. Values already in your environment (or passed as `deploy-kit.sh` flags) take precedence over `config.sh`.
+Other settings: `API_VERSION` (default: highest both orgs support), `DATA_SPACE` (default `default`), `DRY_RUN=1`.
 
 ## Step e: derived payload
 `scripts/derive_payload.py` reads `GET /ssot/data-kits/{kit}` from the source and maps each component:

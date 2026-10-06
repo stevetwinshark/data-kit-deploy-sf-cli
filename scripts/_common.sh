@@ -2,7 +2,12 @@
 # Shared setup. Source from each script.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-[ -f "$ROOT/config.sh" ] && source "$ROOT/config.sh"
+# config.sh supplies defaults only; anything already set in the environment (e.g. by deploy-kit.sh flags) wins.
+if [ -f "$ROOT/config.sh" ]; then
+  _keep="$(env | grep -E '^(KIT|SOURCE_ORG|TARGET_ORG|API_VERSION)=' || true)"
+  source "$ROOT/config.sh"
+  [ -n "$_keep" ] && while IFS= read -r l; do export "$l"; done <<<"$_keep"
+fi
 : "${KIT:?set KIT}"
 : "${SOURCE_ORG:?set SOURCE_ORG (sf alias)}"
 : "${TARGET_ORG:?set TARGET_ORG (sf alias)}"

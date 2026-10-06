@@ -1,4 +1,5 @@
-# Copy to config.sh (gitignored) or export these in your shell.
+# Optional. Copy to config.sh (gitignored) to run scripts/01..05 individually. See README "Getting started".
+# Env vars and deploy-kit.sh flags take precedence over this file.
 export KIT="MyDataKitDevName"      # Data Kit developer name
 export SOURCE_ORG="source-sandbox"          # sf org alias to retrieve from
 export TARGET_ORG="target-sandbox"        # sf org alias to deploy to
