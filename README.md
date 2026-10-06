@@ -69,9 +69,15 @@ The operations are all documented in the Connect API reference; these are the ro
   *package* namespace). List kits with a Tooling query on `DataPackageKitDefinition` instead.
 - **No per-kit deploy body.** The reference documents the request schema per component type, but nothing returns the right body
   for an existing kit, so this tool derives it (hence "experimental").
+- **`DataPackageKitDefinition` always shows as Changed on re-deploy.** `dataKitSource` is `LOCAL` in the source org and becomes
+  `EXTERNAL` in the target after deploy. Expected; not a sign of drift.
 - **Not carried by kits:** DMO→DLO field mappings. Repair them in the target.
 - **Documented but unused here:** the deploy operation accepts a `dataspace` query parameter (defaults to `default` per the reference);
   this tool instead sets `dataSpaceName` in each DLO's deploy config.
+
+## Tests
+`tests/run.sh` runs offline (no org needed): it checks the manifest → `package.xml` conversion and the payload derivation
+against saved fixtures.
 
 See `findings.md` for observed behavior. Contributions and corrections welcome.
 

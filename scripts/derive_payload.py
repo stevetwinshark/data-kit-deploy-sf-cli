@@ -23,7 +23,9 @@ def get(path):
     if r.returncode: sys.exit(r.stderr or txt)
     return json.loads(txt)
 
-d = get(f"/services/data/v{api}/ssot/data-kits/{kit}")["dataKitDetails"][0]
+# KIT_JSON=<file> reads a saved GET response instead of calling the org (used by tests/run.sh)
+d = (json.load(open(os.environ["KIT_JSON"])) if os.environ.get("KIT_JSON")
+     else get(f"/services/data/v{api}/ssot/data-kits/{kit}"))["dataKitDetails"][0]
 json.dump(d, open(os.path.join(out, "kit-source.json"), "w"), indent=2)
 comps = d["components"]
 norm = lambda s: re.sub(r"[^a-z0-9]", "", re.sub(r"__dll$", "", s.lower()))

@@ -21,3 +21,7 @@ Same orgs, same kit; all results identical on v68.0 (the orgs' "Latest Release")
 - `POST /ssot/data-kits/{kit}` without `asyncMode` → `INVALID_INPUT: Sync mode unsupported at this time`.
 - Payload derivation and validate-only metadata deploy (`--dry-run`) succeed; `package.xml` version 68.0.
 - Not re-run on v68.0: a real (mutating) deploy.
+
+## Re-deploy behavior
+- `DataPackageKitDefinition` reports **Changed** on every re-deploy: `dataKitSource` is `LOCAL` (source) vs `EXTERNAL` (target, set by the platform on deploy). Everything else is Unchanged.
+- `DataKitDeploymentLog` is keyed by the deploy POST's `jobId` (`JobIdentifier`): one `Successful` row per component plus one component-less row. Step e waits on this row — it proves *that* run finished, unlike `deployment-status`, which reports ACTIVE immediately for an already-active component.

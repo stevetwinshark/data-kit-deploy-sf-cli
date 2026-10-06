@@ -1,0 +1,6 @@
+{"dataKitDetails":[{"developerName":"Demo","components":[
+ {"componentType":"DataLakeObject","developerName":"Airport_Enriched1","label":"Airport Enriched"},
+ {"developerName":"Airport_Enriched2","label":"Airport_Enriched__dll"},
+ {"componentType":"DataTransform","developerName":"AirportEnriched1","label":"Airport Enriched"},
+ {"componentType":"DataStreamBundle","connectorType":"INGESTAPI","developerName":"MyIngest","label":"MyIngest","streams":[]},
+ {"componentType":"DataModelObject","developerName":"Thing","label":"Thing"}]}]}
