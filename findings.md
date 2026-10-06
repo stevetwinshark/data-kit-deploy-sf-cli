@@ -1,6 +1,6 @@
 # Findings
 
-Observed behavior (API v67.0, sandbox → sandbox). Add dated entries as you test.
+Observed behavior (API v67.0 and v68.0, sandbox → sandbox). Add dated entries as you test.
 
 ## New Data Lake Object in a new kit — full run
 - Dry run: all 7 kit metadata components reported **Created** (kit absent in target); validate-only deploy succeeded.
@@ -12,3 +12,12 @@ Observed behavior (API v67.0, sandbox → sandbox). Add dated entries as you tes
 
 ## Multi-component kit with transforms — derive only
 - DLOs derived and matched to their shells by label; `DataTransform` components skipped by design.
+
+## API v67.0 → v68.0 comparison (read-only probes + validate-only deploy)
+Same orgs, same kit; all results identical on v68.0 (the orgs' "Latest Release"):
+- Singular `/ssot/datakit/{name}/manifest` → 200 (6 members); plural `/ssot/data-kits/{name}/manifest` → `NOT_FOUND`.
+- `GET /ssot/data-kits` without `namespace` → still `INTERNAL_SERVER_ERROR`.
+- `deployment-status` by kit developerName → `ACTIVE`; by `__dll` name → `{"componentDetails":[]}`.
+- `POST /ssot/data-kits/{kit}` without `asyncMode` → `INVALID_INPUT: Sync mode unsupported at this time`.
+- Payload derivation and validate-only metadata deploy (`--dry-run`) succeed; `package.xml` version 68.0.
+- Not re-run on v68.0: a real (mutating) deploy.

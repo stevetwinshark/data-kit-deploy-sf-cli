@@ -2,5 +2,5 @@
   "packageDirectories": [{ "path": "force-app", "default": true }],
   "name": "data-kit-deploy-sf-cli",
   "namespace": "",
-  "sourceApiVersion": "67.0"
+  "sourceApiVersion": "68.0"
 }

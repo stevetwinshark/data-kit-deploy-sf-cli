@@ -5,7 +5,7 @@ scripts — give it a kit name and two org aliases.
 
 > **Experimental.** This relies on Connect API behavior that is undocumented or differs from the published spec
 > (see [Known quirks](#known-quirks)), and the deploy payloads are reverse-engineered. It has been exercised on
-> API v67.0 against sandboxes only. Expect it to break between releases.
+> API v67.0 and v68.0 against sandboxes only. Expect it to break between releases.
 
 | Step | Script | What |
 |---|---|---|
@@ -25,6 +25,11 @@ It is **not a replacement for your release pipeline**: anything deployed this wa
 
 ## Requirements
 `sf` CLI (authenticated to both orgs), `bash`, `jq`, `python3` (stdlib only). macOS/Linux; on Windows use WSL.
+
+## API version
+By default the tools use the **highest API version both orgs support** (read from `GET /services/data` on each org; the
+lower of the two wins). Override with `API_VERSION=68.0`. The `package.xml` `<version>` and every Connect call use it.
+`sourceApiVersion` in `sfdx-project.json` is static (68.0) — update it when you move to a newer release.
 
 ## Usage
 ```bash
@@ -56,6 +61,21 @@ Retrieved metadata lands in `force-app/` and run artifacts in `out/<kit>/` (both
 - DMO→DLO field mappings are not carried by kits; repair them in the target.
 
 See `findings.md` for observed behavior. Contributions and corrections welcome.
+
+## Salesforce documentation
+Official references for the APIs and concepts used here (the contents of the Developer Guide pages were not verified
+by this project — check them for current version availability):
+- [Use CLI to Deploy Changes from a Sandbox to Data 360](https://developer.salesforce.com/docs/data/data-cloud-dev/guide/dc-deploy_data_kit_using_cli.html) — Salesforce's own CLI-based data kit deploy guide
+- [Deploy Data Kit Components by Using the Deploy Data Kit Components Flow](https://developer.salesforce.com/docs/data/data-cloud-dev/guide/dc-deploy_data_kit_components.html)
+- [Data 360 Connect API reference (spec)](https://developer.salesforce.com/docs/data/connectapi/references/spec) — data kit resources: get/create/delete data kits, get available components, update components, deploy components, get manifest, undeploy, component dependencies and status
+- [Data 360 Connect API overview](https://developer.salesforce.com/docs/data/connectapi/overview)
+- [Data Kits (Salesforce Help)](https://help.salesforce.com/s/articleView?id=sf.c360_a_data_package_kits.htm&language=en_US&type=5) — standard vs. DevOps data kits
+- [Build and Share Data 360 Functionality (Salesforce Help)](https://help.salesforce.com/s/articleView?id=c360_a_build_and_share_functionality.htm&type=5&language=en_US)
+- [How API Version and Source API Version Work in Salesforce CLI](https://developer.salesforce.com/docs/platform/sfdx-setup/guide/sfdx-setup-apiversion.html)
+
+Per Salesforce's documentation, the get-manifest operation is available from API v63.0 and deploy-components from v64.0
+(deploy requires `asyncMode=true`). **DevOps data kits** (sandbox → another org) are deployed to the *same data space*
+name in the target org, so the data space must exist there; this tool defaults `dataSpaceName` to `default`.
 
 ## License
 MIT — see `LICENSE`.

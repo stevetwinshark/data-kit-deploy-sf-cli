@@ -14,6 +14,7 @@ import json, re, subprocess, sys, os
 
 kit, src, api = sys.argv[1], sys.argv[2], sys.argv[3]
 out = sys.argv[4]
+# DevOps data kits must deploy to the same-named data space in the target; override if yours is not "default".
 space = os.environ.get("DATA_SPACE", "default")
 
 def get(path):

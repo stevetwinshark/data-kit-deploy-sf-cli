@@ -2,4 +2,4 @@
 export KIT="MyDataKitDevName"      # Data Kit developer name
 export SOURCE_ORG="source-sandbox"          # sf org alias to retrieve from
 export TARGET_ORG="target-sandbox"        # sf org alias to deploy to
-export API_VERSION="67.0"
+# export API_VERSION="68.0"   # optional; default = highest version both orgs support
