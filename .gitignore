@@ -1,0 +1,8 @@
+force-app/
+out/
+.sf/
+.sfdx/
+*.log
+config.sh
+.vscode/
+.DS_Store
